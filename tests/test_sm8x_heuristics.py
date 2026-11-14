@@ -93,9 +93,13 @@ def test_sm80_evicts_weights_first_for_single_m_tile(heuristics_cls):
     layer_config = _block_fp8_moe_layer(heuristics_cls.sm_version)
 
     small = heuristics_cls.get_config(layer_config, shape_m=8, gemm_type=GemmType.INDEXED)
+    # 10 rows per expert on a 16-row M tile: below one tile on average, but above half a tile.
+    above_half_tile = heuristics_cls.get_config(layer_config, shape_m=640, gemm_type=GemmType.INDEXED)
     large = heuristics_cls.get_config(layer_config, shape_m=65536, gemm_type=GemmType.INDEXED)
 
     assert small["evict_weights_first"]
+    assert above_half_tile["block_shape"][0] == 16
+    assert not above_half_tile["evict_weights_first"]
     assert not large["evict_weights_first"]
 
 
